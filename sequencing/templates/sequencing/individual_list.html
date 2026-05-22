@@ -1,0 +1,36 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>All Individuals</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Species</th>
+            <th>ToLID</th>
+            <th>VGL ID</th>
+            <th>NCBI Taxonomy ID</th>
+            <th>Primary Contact</th>
+            <th>Primary Email</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for individual in individuals %}
+        <tr>
+            <td>{{ individual.species }}</td>
+            <td>{{ individual.tolid }}</td>
+            <td>{{ individual.vglid }}</td>
+            <td>{{ individual.taxid }}</td>
+            <td>{{ individual.primary_contact }}</td>
+            <td>{{ individual.primary_email }}</td>
+            <td>{{ individual.created_at|date:"Y-m-d" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="text-align: center;"><em>No individuals added yet</em></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

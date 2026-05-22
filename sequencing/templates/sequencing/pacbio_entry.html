@@ -1,0 +1,149 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>Add PacBio Sequencing Runs</h1>
+
+<div style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <strong>Note:</strong> The individual must already exist in the database. 
+    <a href="{% url 'individual_entry' %}">Add a new individual first</a> if needed.
+</div>
+
+<form method="post" id="pacbio-form">
+    {% csrf_token %}
+    
+    <h2>Select Individual</h2>
+    <label>ToLID</label>
+    <input type="text" id="tolid_input" name="tolid" required 
+           placeholder="Enter ToLID to check if individual exists"
+           style="width: 300px;">
+    <button type="button" onclick="checkIndividual()" 
+            style="background-color: #2196F3; padding: 8px 16px; margin-left: 10px;">
+        Check Individual
+    </button>
+    
+    <div id="individual-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 4px;">
+        <h3>Individual Found:</h3>
+        <p><strong>Species:</strong> <span id="info-species"></span></p>
+        <p><strong>ToLID:</strong> <span id="info-tolid"></span></p>
+        <p><strong>VGL ID:</strong> <span id="info-vglid"></span></p>
+    </div>
+    
+    <div id="individual-not-found" style="display: none; margin-top: 15px; padding: 15px; background: #ffebee; border-radius: 4px; color: #c62828;">
+        <strong>Individual not found.</strong> 
+        <a href="{% url 'individual_entry' %}">Click here to add this individual first.</a>
+    </div>
+    
+    <div id="runs-section" style="display: none; margin-top: 30px;">
+        <h2>PacBio Runs</h2>
+        
+        {{ formset.management_form }}
+        
+        <div id="formset-container">
+            {% for form in formset %}
+                <div class="formset-form" id="form-{{ forloop.counter0 }}">
+                    <h3>Run #<span class="run-number">{{ forloop.counter }}</span></h3>
+                    {% for field in form %}
+                        {% if field.name != 'DELETE' and field.name != 'id' and field.name != 'individual' %}
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <span style="color: red;">{{ field.errors }}</span>
+                            {% endif %}
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <button type="button" onclick="addForm()" 
+                style="background-color: #FF9800; margin-top: 10px;">
+            + Add Another Run
+        </button>
+        
+        <button type="submit" style="margin-top: 20px;">Save All Runs</button>
+    </div>
+</form>
+
+<script>
+let formCount = {{ formset.total_form_count }};
+let individualExists = false;
+
+function checkIndividual() {
+    const tolId = document.getElementById('tolid_input').value.trim();
+    
+    if (!tolId) {
+        alert('Please enter a ToLID');
+        return;
+    }
+    
+    fetch(`/api/check-individual/?tolid=${encodeURIComponent(tolId)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                // Show individual info
+                document.getElementById('info-tolid').textContent = tolId;
+                document.getElementById('info-vglid').textContent = data.vglid || 'N/A';
+                document.getElementById('info-species').textContent = data.species;
+                
+                document.getElementById('individual-info').style.display = 'block';
+                document.getElementById('individual-not-found').style.display = 'none';
+                document.getElementById('runs-section').style.display = 'block';
+                individualExists = true;
+            } else {
+                // Individual not found
+                document.getElementById('individual-info').style.display = 'none';
+                document.getElementById('individual-not-found').style.display = 'block';
+                document.getElementById('runs-section').style.display = 'none';
+                individualExists = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error checking individual. Please try again.');
+        });
+}
+
+function addForm() {
+    const container = document.getElementById('formset-container');
+    const totalForms = document.getElementById('id_pacbiorun_set-TOTAL_FORMS');
+    
+    // Clone the first form
+    const firstForm = document.querySelector('.formset-form');
+    const newForm = firstForm.cloneNode(true);
+    
+    // Update form number in display
+    const runNumber = newForm.querySelector('.run-number');
+    runNumber.textContent = formCount + 1;
+    
+    // Update all form field names and IDs
+    const formRegex = new RegExp(`pacbiorun_set-(\\d+)-`, 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `pacbiorun_set-${formCount}-`);
+    
+    // Clear all input values
+    newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else if (input.name && !input.name.includes('TOTAL_FORMS') && !input.name.includes('INITIAL_FORMS')) {
+            input.value = '';
+        }
+    });
+    
+    // Append new form
+    container.appendChild(newForm);
+    
+    // Update management form
+    formCount++;
+    totalForms.value = formCount;
+}
+
+// Prevent form submission if individual doesn't exist
+document.getElementById('pacbio-form').addEventListener('submit', function(e) {
+    if (!individualExists) {
+        e.preventDefault();
+        alert('Please check that the individual exists before submitting.');
+    }
+});
+</script>
+{% endblock %}

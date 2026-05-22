@@ -1,0 +1,145 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>Add New Individual</h1>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <label>{{ form.species.label }}</label>
+    <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="flex: 1;">
+            {{ form.species }}
+        </div>
+        <button type="button" onclick="lookupSpecies()" 
+                style="background-color: #2196F3; padding: 8px; white-space: nowrap; flex-shrink: 0; margin-top: 5px;">
+            Look up Species Data
+        </button>
+    </div>
+    {% if form.species.errors %}
+        <span style="color: red;">{{ form.species.errors }}</span>
+    {% endif %}
+    
+    <div id="species-lookup-result" style="display: none; margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 4px;">
+        <p><strong>Found:</strong></p>
+        <p>NCBI Taxon ID: <span id="lookup-taxon-id"></span></p>
+        <p>Expected Genome Size: <span id="lookup-genome-size"></span> bp</p>
+    </div>
+    
+    <div id="species-lookup-error" style="display: none; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 4px; color: #c62828;">
+        <strong>Could not find species data.</strong> Please check the species name and try again.
+    </div>
+    
+    <label>{{ form.taxid.label }}</label>
+    <input type="number" name="taxid" id="id_taxid" readonly 
+           style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; background-color: #f5f5f5; color: #666; cursor: not-allowed;">
+    {% if form.taxid.errors %}
+        <span style="color: red;">{{ form.taxid.errors }}</span>
+    {% endif %}
+    
+    <label>{{ form.expected_genome_size_bp.label }}</label>
+    <input type="number" name="expected_genome_size_bp" id="id_expected_genome_size_bp" readonly
+           style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; background-color: #f5f5f5; color: #666; cursor: not-allowed;">
+    {% if form.expected_genome_size_bp.errors %}
+        <span style="color: red;">{{ form.expected_genome_size_bp.errors }}</span>
+    {% endif %}
+    
+    <!-- Line break / section separator -->
+    <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+    
+    <label>{{ form.vglid.label }}</label>
+    {{ form.vglid }}
+    {% if form.vglid.errors %}
+        <span style="color: red;">{{ form.vglid.errors }}</span>
+    {% endif %}
+
+    <label>{{ form.tolid.label }}</label>
+    {{ form.tolid }}
+    {% if form.tolid.errors %}
+        <span style="color: red;">{{ form.tolid.errors }}</span>
+    {% endif %}
+    
+    <!-- Line break / section separator -->
+    <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+    <label>{{ form.primary_contact.label }}</label>
+    {{ form.primary_contact }}
+    {% if form.primary_contact.errors %}
+        <span style="color: red;">{{ form.primary_contact.errors }}</span>
+    {% endif %}
+    
+    <label>{{ form.primary_email.label }}</label>
+    {{ form.primary_email }}
+    {% if form.primary_email.errors %}
+        <span style="color: red;">{{ form.primary_email.errors }}</span>
+    {% endif %}
+    
+    <!-- Line break / section separator -->
+    <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+    <label>{{ form.notes.label }}</label>
+    {{ form.notes }}
+    {% if form.notes.errors %}
+        <span style="color: red;">{{ form.notes.errors }}</span>
+    {% endif %}
+    
+    <button type="submit">Save Individual</button>
+</form>
+
+<script>
+function lookupSpecies() {
+    const speciesInput = document.querySelector('input[name="species"]');
+    const species = speciesInput.value.trim();
+    
+    if (!species) {
+        alert('Please enter a species name first');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Looking up...';
+    button.disabled = true;
+    
+    // Hide previous results
+    document.getElementById('species-lookup-result').style.display = 'none';
+    document.getElementById('species-lookup-error').style.display = 'none';
+    
+    fetch(`/api/lookup-species/?species=${encodeURIComponent(species)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.taxid || data.genome_size) {
+                // Show results
+                document.getElementById('lookup-taxon-id').textContent = data.taxid || 'Not found';
+                document.getElementById('lookup-genome-size').textContent = 
+                    data.genome_size ? data.genome_size.toLocaleString() : 'Not found';
+                document.getElementById('species-lookup-result').style.display = 'block';
+                
+                // Auto-populate readonly form fields
+                const taxonInput = document.getElementById('id_taxid');
+                const genomeSizeInput = document.getElementById('id_expected_genome_size_bp');
+                
+                if (data.taxid) {
+                    taxonInput.value = data.taxid;
+                }
+                
+                if (data.genome_size) {
+                    genomeSizeInput.value = data.genome_size;
+                }
+            } else {
+                // Show error
+                document.getElementById('species-lookup-error').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('species-lookup-error').style.display = 'block';
+        })
+        .finally(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+        });
+}
+</script>
+{% endblock %}

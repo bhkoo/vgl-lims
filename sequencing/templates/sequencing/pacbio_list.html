@@ -1,0 +1,43 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>PacBio Sequencing Data</h1>
+
+{% for individual in individuals %}
+    <h2>{{ individual.tolid }} - {{ individual.species }}</h2>
+    <p><strong>VGL ID:</strong> {{ individual.vglid }}</p>
+    
+    {% if individual.pacbio_runs.all %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Metadata ID</th>
+                    <th>Barcode</th>
+                    <th>Tissue ID</th>
+                    <th>Instrument</th>
+                    <th>Status</th>
+                    <th>Sequenced By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in individual.pacbio_runs.all %}
+                <tr>
+                    <td>{{ run.run_id }}</td>
+                    <td>{{ run.metadata_id }}</td>
+                    <td>{{ run.barcode }}</td>
+                    <td>{{ run.tissue_id }}</td>
+                    <td>{{ run.get_instrument_display }}</td>
+                    <td>{{ run.get_status_display }}</td>
+                    <td>{{ run.sequenced_by }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p><em>No PacBio runs recorded (yet!)</em></p>
+    {% endif %}
+    
+    <hr style="margin: 30px 0;">
+{% endfor %}
+{% endblock %}

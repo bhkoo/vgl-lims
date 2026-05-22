@@ -1,0 +1,23 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>VGL Sequencing</h1>
+
+<div style="margin-top: 30px;">
+    <h2>Getting Started</h2>
+    <p>Welcome to the VGL sequencing database. Use the navigation menu above to:</p>
+    <ul style="line-height: 2;">
+        <li><strong>Add Individual</strong> - Register a new individual</li>
+        <li><strong>Add PacBio Runs</strong> - Enter sequencing run data for existing individuals</li>
+        <li><strong>View Individuals</strong> - See all registered individuals</li>
+        <li><strong>View PacBio Data</strong> - See all sequencing runs</li>
+        <li><strong>Admin Interface</strong> - Advanced data management</li>
+    </ul>
+</div>
+
+<div style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 4px;">
+    <h3>Quick Stats</h3>
+    <p><strong>Total Individuals:</strong> {{ stats.individuals }}</p>
+    <p><strong>Total PacBio Runs:</strong> {{ stats.pacbio_runs }}</p>
+</div>
+{% endblock %}
