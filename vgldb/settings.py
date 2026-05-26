@@ -99,6 +99,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+SEQUENCE_DATA_PROCESSING = {
+    'S3_BUCKET': 'genomeark',
+    'RDEVAL_PATH': 'rdeval',
+    'SAMTOOLS_PATH': 'samtools',
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

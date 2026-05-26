@@ -18,6 +18,8 @@
                     <th>Instrument</th>
                     <th>Status</th>
                     <th>Sequenced By</th>
+                    <th>Total bases</th>
+                    <th>Coverage</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,6 +32,26 @@
                     <td>{{ run.get_instrument_display }}</td>
                     <td>{{ run.get_status_display }}</td>
                     <td>{{ run.sequenced_by }}</td>
+                    <td>{{ run.total_bases|default:"—" }}</td>
+                    <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}X</td>
+                    <td>
+                        {% if run.hpc_filepath and run.status == 'started' %}
+                            <a href="{% url 'process_run' run.run_id %}" 
+                               style="background: #2196F3; color: white; padding: 4px 12px; text-decoration: none; border-radius: 4px;">
+                                Process
+                            </a>
+                        {% elif run.status == 'processing' %}
+                            <button onclick="checkStatus('{{ run.run_id }}')" 
+                                    style="background: #FF9800; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer;">
+                                Refresh
+                            </button>
+                        {% elif run.processing_log %}
+                            <button onclick="showLog('{{ run.run_id }}')" 
+                                    style="background: #9E9E9E; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer;">
+                                View Log
+                            </button>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
