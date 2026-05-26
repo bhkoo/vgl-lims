@@ -1,0 +1,166 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>Sample Lookup</h1>
+
+<div style="margin-bottom: 30px;">
+    <label style="display: block; margin-bottom: 10px;">
+        <strong>Search by VGL ID or Tissue ID:</strong>
+    </label>
+    
+    <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <div style="flex: 1;">
+            <input type="text" id="search-value" placeholder="Enter VGL ID or Tissue ID" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <button type="button" onclick="performSearch()" 
+                style="background-color: #2196F3; padding: 10px 16px; white-space: nowrap; flex-shrink: 0; min-width: 120px; height: 42px;">
+            Search
+        </button>
+    </div>
+</div>
+
+<div id="loading" style="display: none; text-align: center; padding: 20px;">
+    <p>Searching FreezerPro...</p>
+</div>
+
+<div id="error" style="display: none; padding: 15px; background: #ffebee; color: #c62828; border-radius: 4px; margin-bottom: 20px;"></div>
+
+<div id="results" style="display: none;">
+    <h2>Results (<span id="result-count">0</span>)</h2>
+    <div id="results-content"></div>
+</div>
+
+<div id="no-results" style="display: none; padding: 15px; background: #f5f5f5; border-radius: 4px; text-align: center;">
+    <p>No samples found matching your search.</p>
+</div>
+
+<script>
+function performSearch() {
+    const searchValue = document.getElementById('search-value').value.trim();
+    
+    if (!searchValue) {
+        alert('Please enter a search value');
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('no-results').style.display = 'none';
+    
+    fetch(`/api/sample-search/?search_value=${encodeURIComponent(searchValue)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.text();  // Get raw text first
+        })
+        .then(text => {
+            document.getElementById('loading').style.display = 'none';
+            
+            // Log raw response for debugging
+            console.log('Raw response:', text);
+            
+            // Try to parse JSON
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Response was:', text.substring(0, 500));
+                throw new Error(`Failed to parse response: ${e.message}`);
+            }
+            
+            if (data.error) {
+                // Show error
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + data.error;
+            } else if (data.results && data.results.length > 0) {
+                // Show results
+                displayResults(data.results);
+            } else {
+                // No results
+                document.getElementById('no-results').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Error: ' + error.message;
+        });
+}
+
+function displayResults(results) {
+    const resultsContent = document.getElementById('results-content');
+    resultsContent.innerHTML = '';
+    
+    document.getElementById('result-count').textContent = results.length;
+    
+    results.forEach((item, index) => {
+        const sample = item.udfs || {};
+        
+        // Create a card for each result
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        `;
+        
+        let html = `<h3>${sample.vgl_id || 'N/A'}</h3>`;
+        html += '<table style="width: 100%; font-size: 14px;">';
+        
+        // Display relevant fields
+        const displayFields = [
+            { key: 'tissue', label: 'Tissue' },
+            { key: 'collection_date', label: 'Collection Date' },
+            { key: 'collected_by', label: 'Collected By' },
+            { key: 'sent_by', label: 'Sent By' },
+            { key: 'received_date', label: 'Received Date' },
+            { key: 'geo_loc_name', label: 'Location' },
+            { key: 'lat_lon', label: 'Coordinates' },
+            { key: 'sex', label: 'Sex' },
+            { key: 'dev_stage', label: 'Dev Stage' },
+            { key: 'birth_date', label: 'Birth Date' },
+            { key: 'mother', label: 'Mother' },
+            { key: 'father', label: 'Father' },
+            { key: 'treatment', label: 'Treatment' },
+            { key: 'store_cond', label: 'Storage Condition' },
+            { key: 'description', label: 'Description' },
+        ];
+        
+        displayFields.forEach(field => {
+            const value = sample[field.key];
+            if (value) {
+                html += `<tr>
+                    <td style="font-weight: bold; width: 150px; padding: 5px 0;">
+                        ${field.label}:
+                    </td>
+                    <td style="padding: 5px 0;">
+                        ${value}
+                    </td>
+                </tr>`;
+            }
+        });
+        
+        html += '</table>';
+        card.innerHTML = html;
+        resultsContent.appendChild(card);
+    });
+    
+    document.getElementById('results').style.display = 'block';
+}
+
+// Allow pressing Enter to search
+document.getElementById('search-value').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        performSearch();
+    }
+});
+</script>
+{% endblock %}

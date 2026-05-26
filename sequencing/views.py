@@ -5,6 +5,7 @@ from .models import Individual, PacBioRun
 from .forms import IndividualForm, PacBioRunFormSet
 from .utils import augment_individual_data
 from .pipeline import process_pacbio_run
+from .sample_lookup import search_by_tissue_id
 import threading
 
 def home(request):
@@ -170,3 +171,23 @@ def run_status(request, run_id):
         })
     except PacBioRun.DoesNotExist:
         return JsonResponse({'error': 'Run not found'}, status=404)
+
+
+def sample_lookup(request):
+    """Page to lookup sample data from FreezerPro"""
+    return render(request, 'sequencing/sample_lookup.html')
+
+
+def sample_search(request):
+    """AJAX endpoint to search FreezerPro"""
+    search_value = request.GET.get('search_value', '').strip()
+    
+    if not search_value:
+        return JsonResponse({'error': 'Search value required'}, status=400)
+    
+    try:
+        results = search_by_tissue_id(search_value)
+        return JsonResponse(results)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
