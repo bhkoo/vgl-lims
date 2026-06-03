@@ -1,12 +1,13 @@
 {% extends 'sequencing/base.html' %}
+{% load filters %}
 
 {% block content %}
 <h1>PacBio Sequencing Data</h1>
 
 {% for individual in individuals %}
-    <h2>{{ individual.tol_id }} - {{ individual.species }}</h2>
-    <p><strong>VGL ID:</strong> {{ individual.vgl_id }}</p>
-    <p><strong>Expected Genome Size:</strong> {{ individual.expected_genome_size_bp|default:"N/A" }} bp</p>
+    <h2>{{ individual.species }}, {{ individual.tolid }}</h2>
+    <p><strong>VGL ID:</strong> {{ individual.vglid }}</p>
+    <p><strong>Expected Genome Size:</strong> {{ individual.expected_genome_size_bp|format_genome_size }}</p>
     <p><strong>Total PacBio Coverage:</strong> 
         {% if individual.total_pacbio_coverage %}
             {{ individual.total_pacbio_coverage }}x

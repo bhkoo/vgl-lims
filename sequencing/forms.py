@@ -9,6 +9,13 @@ class IndividualForm(forms.ModelForm):
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+        
+    def clean_species(self):
+        """Replace underscores with spaces in species name"""
+        species = self.cleaned_data.get('species', '')
+        if species:
+            species = species.replace('_', ' ')
+        return species
 
 class PacBioRunForm(forms.ModelForm):
     class Meta:
