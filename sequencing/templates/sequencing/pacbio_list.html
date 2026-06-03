@@ -4,60 +4,46 @@
 <h1>PacBio Sequencing Data</h1>
 
 {% for individual in individuals %}
-    <h2>{{ individual.tolid }} - {{ individual.species }}</h2>
-    <p><strong>VGL ID:</strong> {{ individual.vglid }}</p>
+    <h2>{{ individual.tol_id }} - {{ individual.species }}</h2>
+    <p><strong>VGL ID:</strong> {{ individual.vgl_id }}</p>
+    <p><strong>Expected Genome Size:</strong> {{ individual.expected_genome_size_bp|default:"N/A" }} bp</p>
+    <p><strong>Total PacBio Coverage:</strong> 
+        {% if individual.total_pacbio_coverage %}
+            {{ individual.total_pacbio_coverage }}x
+        {% else %}
+            —
+        {% endif %}
+    </p>
     
     {% if individual.pacbio_runs.all %}
         <table>
             <thead>
                 <tr>
                     <th>Run ID</th>
-                    <th>Metadata ID</th>
-                    <th>Barcode</th>
-                    <th>Tissue ID</th>
                     <th>Instrument</th>
+                    <th>Tissue ID</th>
                     <th>Status</th>
-                    <th>Sequenced By</th>
-                    <th>Total bases</th>
+                    <th>Total Bases</th>
                     <th>Coverage</th>
+                    <th>Sequenced By</th>
                 </tr>
             </thead>
             <tbody>
                 {% for run in individual.pacbio_runs.all %}
                 <tr>
                     <td>{{ run.run_id }}</td>
-                    <td>{{ run.metadata_id }}</td>
-                    <td>{{ run.barcode }}</td>
-                    <td>{{ run.tissue_id }}</td>
                     <td>{{ run.get_instrument_display }}</td>
+                    <td>{{ run.tissue_id }}</td>
                     <td>{{ run.get_status_display }}</td>
-                    <td>{{ run.sequenced_by }}</td>
                     <td>{{ run.total_bases|default:"—" }}</td>
-                    <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}X</td>
-                    <td>
-                        {% if run.hpc_filepath and run.status == 'started' %}
-                            <a href="{% url 'process_run' run.run_id %}" 
-                               style="background: #2196F3; color: white; padding: 4px 12px; text-decoration: none; border-radius: 4px;">
-                                Process
-                            </a>
-                        {% elif run.status == 'processing' %}
-                            <button onclick="checkStatus('{{ run.run_id }}')" 
-                                    style="background: #FF9800; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer;">
-                                Refresh
-                            </button>
-                        {% elif run.processing_log %}
-                            <button onclick="showLog('{{ run.run_id }}')" 
-                                    style="background: #9E9E9E; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer;">
-                                View Log
-                            </button>
-                        {% endif %}
-                    </td>
+                    <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
+                    <td>{{ run.sequenced_by|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p><em>No PacBio runs recorded (yet!)</em></p>
+        <p><em>No PacBio runs recorded</em></p>
     {% endif %}
     
     <hr style="margin: 30px 0;">

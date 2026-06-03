@@ -50,18 +50,18 @@ def get_ncbi_taxid(species_name):
         return None
 
 
-def get_expected_genome_size(taxon_id):
+def get_expected_genome_size(taxid):
     """
     Get expected genome size from Genome on a Tree (GoaT) API.
     
     Args:
-        taxon_id: NCBI taxonomy ID
+        taxid: NCBI taxonomy ID
     
     Returns:
         int: Expected genome size in base pairs, or None if not found
     """
     try:
-        url = f"https://goat.genomehubs.org/api/v2/record?recordId={taxon_id}&result=taxon&taxonomy=ncbi"
+        url = f"https://goat.genomehubs.org/api/v2/record?recordId={taxid}&result=taxon&taxonomy=ncbi"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
@@ -75,17 +75,17 @@ def get_expected_genome_size(taxon_id):
                 if genome_size:
                     return int(genome_size)
         
-        logger.warning(f"Could not find genome size for taxon ID: {taxon_id}")
+        logger.warning(f"Could not find genome size for taxon ID: {taxid}")
         return None
         
     except requests.RequestException as e:
-        logger.error(f"Error fetching genome size from GoaT for taxon {taxon_id}: {e}")
+        logger.error(f"Error fetching genome size from GoaT for taxon {taxid}: {e}")
         return None
     except (KeyError, ValueError, TypeError) as e:
-        logger.error(f"Error parsing GoaT response for taxon {taxon_id}: {e}")
+        logger.error(f"Error parsing GoaT response for taxon {taxid}: {e}")
         return None
     except Exception as e:
-        logger.error(f"Unexpected error fetching genome size for taxon {taxon_id}: {e}")
+        logger.error(f"Unexpected error fetching genome size for taxon {taxid}: {e}")
         return None
 
 

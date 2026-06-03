@@ -28,8 +28,8 @@ class IndividualAdmin(admin.ModelAdmin):
 
 @admin.register(PacBioRun)
 class PacBioRunAdmin(admin.ModelAdmin):
-    list_display = ['run_id', 'individual', 'instrument', 'status', 'sequenced_by', 'created_at']
-    search_fields = ['run_id', 'metadata_id', 'individual__tolid', 'individual__species']
+    list_display = ['run_id', 'individual', 'instrument', 'status', 'total_bases', 'coverage', 'sequenced_by', 'created_at']
+    search_fields = ['run_id', 'individual__tol_id']
     list_filter = ['instrument', 'status', 'sequenced_by']
     date_hierarchy = 'created_at'
     
@@ -42,6 +42,10 @@ class PacBioRunAdmin(admin.ModelAdmin):
         }),
         ('Sequencing Details', {
             'fields': ('instrument', 'library_prep', 'status', 'sequenced_by')
+        }),
+        ('Data Metrics', {
+            'fields': ('total_bases', 'coverage'),
+            'description': 'total_bases from SMRTLink; coverage auto-calculated'
         }),
         ('Notes', {
             'fields': ('notes',),

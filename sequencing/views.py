@@ -4,7 +4,6 @@ from django.http import JsonResponse
 from .models import Individual, PacBioRun
 from .forms import IndividualForm, PacBioRunFormSet
 from .utils import augment_individual_data
-from .pipeline import process_pacbio_run
 from .sample_lookup import search_by_tissue_id
 import threading
 
@@ -137,41 +136,6 @@ def pacbio_list(request):
     return render(request, 'sequencing/pacbio_list.html', {
         'individuals': individuals,
     })
-
-def process_run(request, run_id):
-    """Manually trigger processing for a PacBio run"""
-    try:
-        run = PacBioRun.objects.get(run_id=run_id)
-        
-        # Run processing in background thread to avoid blocking
-        thread = threading.Thread(
-            target=process_pacbio_run,
-            args=(run_id,),
-            kwargs={'s3_bucket': 'genomeark'}  # Your S3 bucket
-        )
-        thread.start()
-        
-        messages.success(request, f'Started processing run {run_id}. Check back soon for results.')
-        return redirect('pacbio_list')
-        
-    except PacBioRun.DoesNotExist:
-        messages.error(request, f'Run {run_id} not found')
-        return redirect('pacbio_list')
-    
-def run_status(request, run_id):
-    """AJAX endpoint to check processing status"""
-    try:
-        run = PacBioRun.objects.get(run_id=run_id)
-        return JsonResponse({
-            'status': run.status,
-            'total_bases': run.total_bases,
-            'coverage': float(run.coverage) if run.coverage else None,
-            'rdeval_s3_path': run.rdeval_s3_path,
-            'processing_log': run.processing_log,
-        })
-    except PacBioRun.DoesNotExist:
-        return JsonResponse({'error': 'Run not found'}, status=404)
-
 
 def sample_lookup(request):
     """Page to lookup sample data from FreezerPro"""

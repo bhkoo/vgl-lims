@@ -41,7 +41,14 @@ class Individual(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.tolid} - {self.species}"
+        return f"{self.species}, {self.tolid}"
+    
+    @property
+    def total_pacbio_coverage(self):
+        """Calculate total PacBio coverage from all runs"""
+        runs = self.pacbio_runs.filter(coverage__isnull=False)
+        total = sum(float(run.coverage) for run in runs if run.coverage)
+        return round(total, 2) if total > 0 else None
 
 
 class PacBioRun(models.Model):
@@ -51,21 +58,18 @@ class PacBioRun(models.Model):
     tissue_id = models.CharField("Tissue ID", max_length=20, blank = True)
     run_id = models.CharField("Run ID", max_length=100, unique=True)
     metadata_id = models.CharField("Metadata ID", max_length=100, blank=True)
-    barcode = models.CharField(max_length=6, blank=True)
-    hpc_filepath = models.TextField("HPC Filepath", blank=True)
+    barcode = models.CharField(max_length=50, blank=True)
+    hpc_filepath = models.CharField("HPC Filepath", max_length=100, blank=True)
     
-    # Calculated/processed fields
-    bam_filepath = models.TextField("BAM Filepath", blank=True, help_text="Auto-generated from HPC filepath")
-    fastq_filepath = models.TextField("FASTQ Filepath", blank=True, help_text="Generated fastq.gz file")
-    total_bases = models.BigIntegerField("Total Bases", null=True, blank=True, help_text="Total basepairs in fastq file")
-    coverage = models.DecimalField("Coverage", max_digits=6, decimal_places=2, null=True, blank=True, help_text="Calculated coverage (x)")
-
     INSTRUMENT_CHOICES = [
         ('revio', 'Revio'),
         ('sequel_ii', 'Sequel II'),
     ]
-    instrument = models.CharField(max_length=20, choices=INSTRUMENT_CHOICES)
+    instrument = models.CharField(max_length=20, choices=INSTRUMENT_CHOICES, default="Revio")
     library_prep = models.CharField(max_length=255, blank=True)
+    
+    total_bases = models.BigIntegerField("Total Bases (bp)", null=True, blank=True, help_text="From SMRTLink output")
+    coverage = models.DecimalField("Coverage (x)", max_digits=10, decimal_places=2, null=True, blank=True, help_text="Calculated from total bases / expected genome size")
     
     STATUS_CHOICES = [
         ('started', 'Started'),
@@ -76,7 +80,6 @@ class PacBioRun(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
     sequenced_by = models.CharField(max_length=255, blank=True)
     
-    processing_log = models.TextField(blank=True, help_text="Log of processing steps")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     notes = models.TextField(blank=True)
@@ -85,21 +88,10 @@ class PacBioRun(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.run_id} - {self.individual.tolid}"
-
+        return f"{self.run_id} - {self.individual.tol_id}"
+    
     def save(self, *args, **kwargs):
-        """Override save to trigger processing if hpc_filepath is set"""
-        is_new = self.pk is None
+        """Calculate coverage on save if total_bases is provided"""
+        if self.total_bases and self.individual.expected_genome_size_bp and not self.coverage:
+            self.coverage = self.total_bases / self.individual.expected_genome_size_bp
         super().save(*args, **kwargs)
-        
-        # Auto-trigger processing for new runs with filepath
-        if is_new and self.hpc_filepath and self.status == 'planned':
-            from .pipeline import process_pacbio_run
-            import threading
-            
-            thread = threading.Thread(
-                target=process_pacbio_run,
-                args=(self.run_id,),
-                kwargs={'s3_bucket': 'genomeark'}
-            )
-            thread.start()
