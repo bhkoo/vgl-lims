@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Individual, PacBioRun
+from .models import Individual, PacBioRun, HiCRun
 
 # Register your models here.
 
@@ -46,6 +46,33 @@ class PacBioRunAdmin(admin.ModelAdmin):
         ('Data Metrics', {
             'fields': ('total_bases', 'coverage'),
             'description': 'total_bases from SMRTLink; coverage auto-calculated'
+        }),
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(HiCRun)
+class HiCRunAdmin(admin.ModelAdmin):
+    list_display = ['run_id', 'individual', 'library_prep', 'status', 'total_bases', 'coverage', 'sequenced_by', 'created_at']
+    search_fields = ['run_id', 'individual__tolid', 'genomeark_uploads_path']
+    list_filter = ['library_prep', 'status', 'sequenced_by']
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Individual', {
+            'fields': ('individual',)
+        }),
+        ('Run Information', {
+            'fields': ('run_id', 'metadata_id', 'genomeark_uploads_path')
+        }),
+        ('Sequencing Details', {
+            'fields': ('instrument', 'library_prep', 'status', 'sequenced_by')
+        }),
+        ('Data Metrics', {
+            'fields': ('total_bases', 'coverage'),
+            'description': 'total_bases from sequencing output; coverage auto-calculated'
         }),
         ('Notes', {
             'fields': ('notes',),

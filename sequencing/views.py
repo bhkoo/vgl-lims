@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
-from .models import Individual, PacBioRun
-from .forms import IndividualForm, PacBioRunFormSet
+from .models import Individual, PacBioRun, HiCRun
+from .forms import IndividualForm, PacBioRunFormSet, HiCRunFormSet
 from .utils import augment_individual_data
 from .sample_lookup import search_by_tissue_id
 import threading
@@ -80,30 +80,48 @@ def check_individual(request):
     except Individual.DoesNotExist:
         return JsonResponse({'exists': False})
 
-def pacbio_entry(request):
-    """Form to add PacBio runs for an existing individual"""
+def sequencing_entry(request):
+    """Unified form to add sequencing runs (PacBio or Hi-C)"""
     
     if request.method == 'POST':
         tolid = request.POST.get('tolid')
+        sequencing_type = request.POST.get('sequencing_type')
         
         try:
             individual = Individual.objects.get(tolid=tolid)
         except Individual.DoesNotExist:
             messages.error(request, f'Individual with ToLID "{tolid}" not found. Please add the individual first.')
-            return redirect('pacbio_entry')
+            return redirect('sequencing_entry')
         
-        formset = PacBioRunFormSet(request.POST, instance=individual)
+        if sequencing_type == 'pacbio':
+            formset = PacBioRunFormSet(request.POST, instance=individual)
+            formset_name = 'PacBio'
+        elif sequencing_type == 'hic':
+            formset = HiCRunFormSet(request.POST, instance=individual)
+            formset_name = 'Hi-C'
+        else:
+            messages.error(request, 'Invalid sequencing type')
+            return redirect('sequencing_entry')
         
         if formset.is_valid():
             runs = formset.save()
             count = len([r for r in runs if r is not None])
-            messages.success(request, f'Successfully added {count} PacBio run(s) for {individual.tolid}')
-            return redirect('pacbio_entry')
+            messages.success(request, f'Successfully added {count} {formset_name} run(s) for {individual.tolid}')
+            return redirect('sequencing_entry')
     else:
-        formset = PacBioRunFormSet()
+        pacbio_formset = PacBioRunFormSet()
+        hic_formset = HiCRunFormSet()
     
-    return render(request, 'sequencing/pacbio_entry.html', {
-        'formset': formset,
+    return render(request, 'sequencing/sequencing_entry.html', {
+        'pacbio_formset': pacbio_formset,
+        'hic_formset': hic_formset,
+    })
+
+def sequencing_list(request):
+    """View all sequencing runs"""
+    individuals = Individual.objects.prefetch_related('pacbio_runs', 'hic_runs').all()
+    return render(request, 'sequencing/sequencing_list.html', {
+        'individuals': individuals,
     })
 
 def check_individual(request):

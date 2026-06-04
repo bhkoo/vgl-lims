@@ -1,0 +1,223 @@
+{% extends 'sequencing/base.html' %}
+
+{% block content %}
+<h1>Add Sequencing Runs</h1>
+
+
+<div style="margin-bottom: 30px;">
+    <label style="display: block; margin-bottom: 10px;">
+        <strong>Note:</strong> The individual must already exist in the database. 
+        <a href="{% url 'individual_entry' %}">Add a new individual first</a> if needed.
+    </label>
+    
+    <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <div style="flex: 1;">
+            <label>ToLID</label>
+            <input type="text" id="tolid_input" placeholder="Enter ToLID to check if individual exists"
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <button type="button" onclick="checkIndividual()" 
+                style="background-color: #2196F3; padding: 10px 16px; white-space: nowrap; flex-shrink: 0; min-width: 180px; height: 42px;">
+            Check Individual
+        </button>
+    </div>
+    
+    <div id="individual-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 4px;">
+        <h3>Individual Found:</h3>
+        <p><strong>ToLID:</strong> <span id="info-tolid"></span></p>
+        <p><strong>VGL ID:</strong> <span id="info-vglid"></span></p>
+        <p><strong>Species:</strong> <span id="info-species"></span></p>
+    </div>
+    
+    <div id="individual-not-found" style="display: none; margin-top: 15px; padding: 15px; background: #ffebee; border-radius: 4px; color: #c62828;">
+        <strong>Individual not found.</strong> 
+        <a href="{% url 'individual_entry' %}">Click here to add this individual first.</a>
+    </div>
+</div>
+
+<div id="sequencing-type-section" style="display: none; margin-bottom: 30px;">
+    <label style="display: block; margin-bottom: 10px;">
+        <strong>Select Sequencing Type:</strong>
+    </label>
+    <select id="sequencing-type" onchange="showForm()" style="width: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="">-- Choose Type --</option>
+        <option value="pacbio">PacBio</option>
+        <option value="hic">Hi-C</option>
+    </select>
+</div>
+
+<!-- PacBio Form -->
+<form id="pacbio-form" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="sequencing_type" value="pacbio">
+    <input type="hidden" name="tolid" id="pacbio-tolid">
+    
+    <h2>PacBio Runs</h2>
+    {{ pacbio_formset.management_form }}
+    
+    <div id="pacbio-formset-container">
+        {% for form in pacbio_formset %}
+            <div class="formset-form" id="pacbio-form-{{ forloop.counter0 }}">
+                <h3>Run #<span class="run-number">{{ forloop.counter }}</span></h3>
+                {% for field in form %}
+                    {% if field.name != 'DELETE' and field.name != 'id' and field.name != 'individual' %}
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <span style="color: red;">{{ field.errors }}</span>
+                        {% endif %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <button type="button" onclick="addPacBioForm()" 
+            style="background-color: #FF9800; margin-top: 10px;">
+        + Add Another Run
+    </button>
+    
+    <button type="submit" style="margin-top: 20px;">Save PacBio Runs</button>
+</form>
+
+<!-- Hi-C Form -->
+<form id="hic-form" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="sequencing_type" value="hic">
+    <input type="hidden" name="tolid" id="hic-tolid">
+    
+    <h2>Hi-C Runs</h2>
+    {{ hic_formset.management_form }}
+    
+    <div id="hic-formset-container">
+        {% for form in hic_formset %}
+            <div class="formset-form" id="hic-form-{{ forloop.counter0 }}">
+                <h3>Run #<span class="run-number">{{ forloop.counter }}</span></h3>
+                {% for field in form %}
+                    {% if field.name != 'DELETE' and field.name != 'id' and field.name != 'individual' %}
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <span style="color: red;">{{ field.errors }}</span>
+                        {% endif %}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <button type="button" onclick="addHiCForm()" 
+            style="background-color: #FF9800; margin-top: 10px;">
+        + Add Another Run
+    </button>
+    
+    <button type="submit" style="margin-top: 20px;">Save Hi-C Runs</button>
+</form>
+
+<script>
+let pacbioFormCount = {{ pacbio_formset.total_form_count }};
+let hicFormCount = {{ hic_formset.total_form_count }};
+let individualExists = false;
+
+function checkIndividual() {
+    const tolid = document.getElementById('tolid_input').value.trim();
+    
+    if (!tolid) {
+        alert('Please enter a ToLID');
+        return;
+    }
+    
+    fetch(`/api/check-individual/?tolid=${encodeURIComponent(tolid)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                document.getElementById('info-tolid').textContent = tolid;
+                document.getElementById('info-vglid').textContent = data.vglid || 'N/A';
+                document.getElementById('info-species').textContent = data.species;
+                
+                document.getElementById('individual-info').style.display = 'block';
+                document.getElementById('individual-not-found').style.display = 'none';
+                document.getElementById('sequencing-type-section').style.display = 'block';
+                
+                document.getElementById('pacbio-tolid').value = tolid;
+                document.getElementById('hic-tolid').value = tolid;
+                
+                individualExists = true;
+            } else {
+                document.getElementById('individual-info').style.display = 'none';
+                document.getElementById('individual-not-found').style.display = 'block';
+                document.getElementById('sequencing-type-section').style.display = 'none';
+                individualExists = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error checking individual. Please try again.');
+        });
+}
+
+function showForm() {
+    const sequencingType = document.getElementById('sequencing-type').value;
+    document.getElementById('pacbio-form').style.display = sequencingType === 'pacbio' ? 'block' : 'none';
+    document.getElementById('hic-form').style.display = sequencingType === 'hic' ? 'block' : 'none';
+}
+
+function addPacBioForm() {
+    const container = document.getElementById('pacbio-formset-container');
+    const firstForm = container.querySelector('.formset-form');
+    const newForm = firstForm.cloneNode(true);
+    
+    const runNumber = newForm.querySelector('.run-number');
+    runNumber.textContent = pacbioFormCount + 1;
+    
+    const formRegex = new RegExp(`pacbiorun_set-(\\d+)-`, 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `pacbiorun_set-${pacbioFormCount}-`);
+    
+    newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else if (input.name && !input.name.includes('TOTAL_FORMS') && !input.name.includes('INITIAL_FORMS')) {
+            input.value = '';
+        }
+    });
+    
+    container.appendChild(newForm);
+    pacbioFormCount++;
+    document.getElementById('id_pacbiorun_set-TOTAL_FORMS').value = pacbioFormCount;
+}
+
+function addHiCForm() {
+    const container = document.getElementById('hic-formset-container');
+    const firstForm = container.querySelector('.formset-form');
+    const newForm = firstForm.cloneNode(true);
+    
+    const runNumber = newForm.querySelector('.run-number');
+    runNumber.textContent = hicFormCount + 1;
+    
+    const formRegex = new RegExp(`hicrun_set-(\\d+)-`, 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `hicrun_set-${hicFormCount}-`);
+    
+    newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else if (input.name && !input.name.includes('TOTAL_FORMS') && !input.name.includes('INITIAL_FORMS')) {
+            input.value = '';
+        }
+    });
+    
+    container.appendChild(newForm);
+    hicFormCount++;
+    document.getElementById('id_hicrun_set-TOTAL_FORMS').value = hicFormCount;
+}
+
+document.getElementById('tolid_input').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        checkIndividual();
+    }
+});
+</script>
+{% endblock %}

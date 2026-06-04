@@ -1,0 +1,83 @@
+{% extends 'sequencing/base.html' %}
+{% load filters %}
+
+{% block content %}
+<h1>Sequencing Data</h1>
+
+{% for individual in individuals %}
+    <h2>{{ individual.species }}, {{ individual.tolid }}</h2>
+    <p><strong>VGL ID:</strong> {{ individual.vglid }}</p>
+    <p><strong>Expected Genome Size:</strong> {{ individual.expected_genome_size_bp|format_genome_size }}</p>
+    <p><strong>Total Sequencing Coverage:</strong> 
+        {% if individual.total_sequencing_coverage %}
+            {{ individual.total_sequencing_coverage }}x
+        {% else %}
+            —
+        {% endif %}
+    </p>
+    
+    <!-- PacBio Runs -->
+    {% if individual.pacbio_runs.all %}
+        <h3>PacBio Runs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Instrument</th>
+                    <th>Status</th>
+                    <th>Total Bases</th>
+                    <th>Coverage</th>
+                    <th>Sequenced By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in individual.pacbio_runs.all %}
+                <tr>
+                    <td>{{ run.run_id }}</td>
+                    <td>{{ run.get_instrument_display }}</td>
+                    <td>{{ run.get_status_display }}</td>
+                    <td>{{ run.total_bases|format_genome_size }}</td>
+                    <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
+                    <td>{{ run.sequenced_by|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    
+    <!-- Hi-C Runs -->
+    {% if individual.hic_runs.all %}
+        <h3>Hi-C Runs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Library Prep</th>
+                    <th>Status</th>
+                    <th>Total Bases</th>
+                    <th>Coverage</th>
+                    <th>Received By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in individual.hic_runs.all %}
+                <tr>
+                    <td>{{ run.run_id }}</td>
+                    <td>{{ run.get_library_prep_display }}</td>
+                    <td>{{ run.get_status_display }}</td>
+                    <td>{{ run.total_bases|format_genome_size }}</td>
+                    <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
+                    <td>{{ run.received_by|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    
+    {% if not individual.pacbio_runs.all and not individual.hic_runs.all %}
+        <p><em>No sequencing runs recorded</em></p>
+    {% endif %}
+    
+    <hr style="margin: 30px 0;">
+{% endfor %}
+{% endblock %}
