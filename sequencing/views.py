@@ -83,6 +83,9 @@ def check_individual(request):
 def sequencing_entry(request):
     """Unified form to add sequencing runs (PacBio or Hi-C)"""
     
+    pacbio_formset = None
+    hic_formset = None
+    
     if request.method == 'POST':
         tolid = request.POST.get('tolid')
         sequencing_type = request.POST.get('sequencing_type')
@@ -94,19 +97,53 @@ def sequencing_entry(request):
             return redirect('sequencing_entry')
         
         if sequencing_type == 'pacbio':
-            formset = PacBioRunFormSet(request.POST, instance=individual)
-            formset_name = 'PacBio'
+            pacbio_formset = PacBioRunFormSet(request.POST, instance=individual)
+            
+            if not pacbio_formset.is_valid():
+                
+                # Display formset errors
+                for form_idx, form in enumerate(pacbio_formset):
+                    if form.errors:
+                        for field, errors in form.errors.items():
+                            for error in errors:
+                                messages.error(request, f'Form {form_idx} - {field}: {error}')
+                
+                # Display non-form errors
+                for error in pacbio_formset.non_form_errors():
+                    messages.error(request, f'Formset error: {error}')
+                
+                hic_formset = HiCRunFormSet()
+            else:
+                runs = pacbio_formset.save()
+                count = len([r for r in runs if r is not None])
+                messages.success(request, f'Successfully added {count} PacBio run(s) for {individual.tolid}')
+                return redirect('sequencing_entry')
+                
         elif sequencing_type == 'hic':
-            formset = HiCRunFormSet(request.POST, instance=individual)
-            formset_name = 'Hi-C'
+            hic_formset = HiCRunFormSet(request.POST, instance=individual)
+            
+            
+            if not hic_formset.is_valid():
+                
+                # Display formset errors
+                for form_idx, form in enumerate(hic_formset):
+                    if form.errors:
+                        for field, errors in form.errors.items():
+                            for error in errors:
+                                messages.error(request, f'Form {form_idx} - {field}: {error}')
+                
+                # Display non-form errors
+                for error in hic_formset.non_form_errors():
+                    messages.error(request, f'Formset error: {error}')
+                
+                pacbio_formset = PacBioRunFormSet()
+            else:
+                runs = hic_formset.save()
+                count = len([r for r in runs if r is not None])
+                messages.success(request, f'Successfully added {count} Hi-C run(s) for {individual.tolid}')
+                return redirect('sequencing_entry')
         else:
             messages.error(request, 'Invalid sequencing type')
-            return redirect('sequencing_entry')
-        
-        if formset.is_valid():
-            runs = formset.save()
-            count = len([r for r in runs if r is not None])
-            messages.success(request, f'Successfully added {count} {formset_name} run(s) for {individual.tolid}')
             return redirect('sequencing_entry')
     else:
         pacbio_formset = PacBioRunFormSet()

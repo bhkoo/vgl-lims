@@ -71,10 +71,10 @@ class PacBioRun(models.Model):
     
     individual = models.ForeignKey(Individual, on_delete=models.CASCADE, related_name='pacbio_runs')
     tissue_id = models.CharField("Tissue ID", max_length=20, blank = True)
-    run_id = models.CharField("Run ID", max_length=100, unique=True)
+    run_id = models.CharField("Run ID", max_length=100)
     metadata_id = models.CharField("Metadata ID", max_length=100, blank=True)
     barcode = models.CharField(max_length=50, blank=True)
-    hpc_filepath = models.CharField("HPC Filepath", max_length=100, blank=True)
+    hpc_filepath = models.CharField("HPC Filepath", max_length=250, blank=True)
     
     INSTRUMENT_CHOICES = [
         ('revio', 'Revio'),
@@ -82,6 +82,8 @@ class PacBioRun(models.Model):
     ]
     instrument = models.CharField(max_length=25, choices=INSTRUMENT_CHOICES, default="Revio")
     library_prep = models.CharField(max_length=255, blank=True)
+
+    multiplexed = models.BooleanField("Multiplexed", default=False)
     
     total_bases = models.BigIntegerField("Total Bases (bp)", null=True, blank=True, help_text="From SMRTLink output")
     coverage = models.DecimalField("Coverage (x)", max_digits=10, decimal_places=2, null=True, blank=True, help_text="Calculated from total bases / expected genome size")
@@ -103,7 +105,7 @@ class PacBioRun(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.run_id} - {self.individual.tol_id}"
+        return f"{self.run_id} - {self.individual.tolid}"
     
     def save(self, *args, **kwargs):
         """Calculate coverage on save if total_bases is provided"""

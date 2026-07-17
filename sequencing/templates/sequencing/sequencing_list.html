@@ -22,7 +22,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Run ID</th>
+                    <th>Metadata ID</th>
                     <th>Instrument</th>
                     <th>Status</th>
                     <th>Total Bases</th>
@@ -33,7 +33,7 @@
             <tbody>
                 {% for run in individual.pacbio_runs.all %}
                 <tr>
-                    <td>{{ run.run_id }}</td>
+                    <td>{{ run.metadata_id }}</td>
                     <td>{{ run.get_instrument_display }}</td>
                     <td>{{ run.get_status_display }}</td>
                     <td>{{ run.total_bases|format_genome_size }}</td>

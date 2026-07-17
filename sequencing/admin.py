@@ -68,7 +68,7 @@ class HiCRunAdmin(admin.ModelAdmin):
             'fields': ('run_id', 'metadata_id', 'genomeark_uploads_path')
         }),
         ('Sequencing Details', {
-            'fields': ('instrument', 'library_prep', 'status', 'sequenced_by')
+            'fields': ('instrument', 'library_prep', 'multiplexed', 'status', 'sequenced_by')
         }),
         ('Data Metrics', {
             'fields': ('total_bases', 'coverage'),

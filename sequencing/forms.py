@@ -20,11 +20,37 @@ class IndividualForm(forms.ModelForm):
 class PacBioRunForm(forms.ModelForm):
     class Meta:
         model = PacBioRun
-        fields = ['tissue_id', 'run_id', 'metadata_id', 'barcode', 'hpc_filepath', 'instrument', 
+        fields = ['tissue_id', 'run_id', 'metadata_id', 'barcode', 'multiplexed', 'hpc_filepath', 'instrument', 
                   'library_prep', 'sequenced_by', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 2}),
         }
+
+    def clean(self):
+        """Check for duplicate combination of run_id, metadata_id, and barcode"""
+        cleaned_data = super().clean()
+        run_id = cleaned_data.get('run_id', '').strip()
+        metadata_id = cleaned_data.get('metadata_id', '').strip()
+        barcode = cleaned_data.get('barcode', '').strip()
+        
+        # Skip validation if this is a blank form
+        if not run_id and not metadata_id and not barcode:
+            return cleaned_data
+
+        # Check if this exact combination already exists
+        matching_runs = PacBioRun.objects.filter(
+            run_id=run_id,
+            metadata_id=metadata_id,
+            barcode=barcode
+        )
+        
+        if matching_runs.exists():
+            raise forms.ValidationError(
+                f'A run with Run ID "{run_id}", Metadata ID "{metadata_id}", '
+                f'and Barcode "{barcode}" already exists in the database.'
+            )
+        
+        return cleaned_data
 
 # Formset for entering multiple PacBio runs at once
 PacBioRunFormSet = forms.inlineformset_factory(
