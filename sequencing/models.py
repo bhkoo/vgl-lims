@@ -29,6 +29,7 @@ class Individual(models.Model):
     tolid = models.CharField("ToLID", max_length=20, unique=True, primary_key=True)
     vglid = models.CharField("VGL ID", max_length=20, blank=True)
     species = models.CharField(max_length=255)
+    subspecies = models.CharField("Subspecies", max_length=255, blank=True)
     taxid = models.IntegerField("NCBI Taxonomy ID", null=True, blank=True)
     expected_genome_size_bp = models.BigIntegerField("Expected Genome Size (bp)", null=True, blank=True)
     primary_contact = models.CharField(max_length=50, blank=True)

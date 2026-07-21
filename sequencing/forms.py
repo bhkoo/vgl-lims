@@ -4,14 +4,13 @@ from .models import Individual, PacBioRun, HiCRun
 class IndividualForm(forms.ModelForm):
     class Meta:
         model = Individual
-        fields = ['species', 'tolid', 'vglid', 'taxid', 'expected_genome_size_bp', 'primary_contact', 
+        fields = ['species', 'subspecies', 'tolid', 'vglid', 'taxid', 'expected_genome_size_bp', 'primary_contact', 
                   'primary_email', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
     def clean_species(self):
-        """Replace underscores with spaces in species name"""
         species = self.cleaned_data.get('species', '')
         if species:
             species = species.replace('_', ' ')

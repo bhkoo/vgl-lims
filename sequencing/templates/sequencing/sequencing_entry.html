@@ -171,11 +171,15 @@ function addPacBioForm() {
     const firstForm = container.querySelector('.formset-form');
     const newForm = firstForm.cloneNode(true);
     
+    // Update the outer div's own id (this was being skipped before)
+    newForm.id = `pacbio-form-${pacbioFormCount}`;
+    
     const runNumber = newForm.querySelector('.run-number');
     runNumber.textContent = pacbioFormCount + 1;
     
-    const formRegex = new RegExp(`pacbiorun_set-(\\d+)-`, 'g');
-    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `pacbiorun_set-${pacbioFormCount}-`);
+    // Fixed prefix: pacbio_runs, not pacbiorun_set
+    const formRegex = new RegExp(`pacbio_runs-(\\d+)-`, 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `pacbio_runs-${pacbioFormCount}-`);
     
     newForm.querySelectorAll('input, select, textarea').forEach(input => {
         if (input.type === 'checkbox') {
@@ -187,7 +191,7 @@ function addPacBioForm() {
     
     container.appendChild(newForm);
     pacbioFormCount++;
-    document.getElementById('id_pacbiorun_set-TOTAL_FORMS').value = pacbioFormCount;
+    document.getElementById('id_pacbio_runs-TOTAL_FORMS').value = pacbioFormCount;
 }
 
 function addHiCForm() {

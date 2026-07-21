@@ -49,14 +49,19 @@ def individual_entry(request):
 def lookup_species(request):
     """AJAX endpoint to lookup species data from NCBI and GoaT"""
     species = request.GET.get('species', '').strip()
+    subspecies = request.GET.get('subspecies', '').strip()
     
     if not species:
         return JsonResponse({'error': 'No species provided'}, status=400)
     
-    augmented_data = augment_individual_data(species)
+    # Combine species and subspecies for the search query
+    search_term = f"{species} {subspecies}".strip() if subspecies else species
+    
+    augmented_data = augment_individual_data(search_term)
     
     return JsonResponse({
         'species': species,
+        'subspecies': subspecies,
         'taxid': augmented_data['taxid'],
         'genome_size': augmented_data['genome_size'],
     })
@@ -100,17 +105,17 @@ def sequencing_entry(request):
             pacbio_formset = PacBioRunFormSet(request.POST, instance=individual)
             
             if not pacbio_formset.is_valid():
-                
-                # Display formset errors
                 for form_idx, form in enumerate(pacbio_formset):
                     if form.errors:
                         for field, errors in form.errors.items():
                             for error in errors:
-                                messages.error(request, f'Form {form_idx} - {field}: {error}')
+                                if field == '__all__':
+                                    messages.error(request, f'Error: {error}')
+                                else:
+                                    messages.error(request, f'Error ({field}): {error}')
                 
-                # Display non-form errors
                 for error in pacbio_formset.non_form_errors():
-                    messages.error(request, f'Formset error: {error}')
+                    messages.error(request, f'Error: {error}')
                 
                 hic_formset = HiCRunFormSet()
             else:
@@ -122,19 +127,18 @@ def sequencing_entry(request):
         elif sequencing_type == 'hic':
             hic_formset = HiCRunFormSet(request.POST, instance=individual)
             
-            
             if not hic_formset.is_valid():
-                
-                # Display formset errors
                 for form_idx, form in enumerate(hic_formset):
                     if form.errors:
                         for field, errors in form.errors.items():
                             for error in errors:
-                                messages.error(request, f'Form {form_idx} - {field}: {error}')
+                                if field == '__all__':
+                                    messages.error(request, f'Error: {error}')
+                                else:
+                                    messages.error(request, f'Error ({field}): {error}')
                 
-                # Display non-form errors
                 for error in hic_formset.non_form_errors():
-                    messages.error(request, f'Formset error: {error}')
+                    messages.error(request, f'Error: {error}')
                 
                 pacbio_formset = PacBioRunFormSet()
             else:

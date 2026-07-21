@@ -11,23 +11,33 @@
         <div style="flex: 1;">
             {{ form.species }}
         </div>
-        <button type="button" onclick="lookupSpecies()" 
-                style="background-color: #2196F3; padding: 8px; white-space: nowrap; flex-shrink: 0; margin-top: 5px;">
-            Look up Species Data
-        </button>
     </div>
     {% if form.species.errors %}
         <span style="color: red;">{{ form.species.errors }}</span>
     {% endif %}
+
+    <label>{{ form.subspecies.label }} (Optional)</label>
+    <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <div style="flex: 1;">
+            {{ form.subspecies }}
+        </div>
+    </div>
+    {% if form.subspecies.errors %}
+        <span style="color: red;">{{ form.subspecies.errors }}</span>
+    {% endif %}
+    <button type="button" onclick="lookupSpecies()" 
+        style="background-color: #2196F3; padding: 10px 16px; white-space: nowrap; flex-shrink: 0; min-width: 180px; height: 42px;">
+        Lookup Species Data
+    </button>
     
     <div id="species-lookup-result" style="display: none; margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 4px;">
         <p><strong>Found:</strong></p>
-        <p>NCBI Taxon ID: <span id="lookup-taxon-id"></span></p>
+        <p>NCBI Taxon ID: <a id="lookup-taxon-id-link" href="#" target="_blank"><span id="lookup-taxon-id"></span></a></p>
         <p>Expected Genome Size: <span id="lookup-genome-size"></span> bp</p>
     </div>
     
     <div id="species-lookup-error" style="display: none; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 4px; color: #c62828;">
-        <strong>Could not find species data.</strong> Please check the species name and try again.
+        <strong>Could not find species data.</strong> Please check the species name and try again. Note that species without a taxon ID on NCBI will need to be registered by <a href="https://submit.ncbi.nlm.nih.gov/subs/" target="_blank">submitting</a> a BioSample to NCBI.
     </div>
     
     <label>{{ form.taxid.label }}</label>
@@ -90,7 +100,9 @@
 <script>
 function lookupSpecies() {
     const speciesInput = document.querySelector('input[name="species"]');
+    const subspeciesInput = document.querySelector('input[name="subspecies"]');
     const species = speciesInput.value.trim();
+    const subspecies = subspeciesInput.value.trim();
     
     if (!species) {
         alert('Please enter a species name first');
@@ -106,8 +118,10 @@ function lookupSpecies() {
     // Hide previous results
     document.getElementById('species-lookup-result').style.display = 'none';
     document.getElementById('species-lookup-error').style.display = 'none';
+
+    const params = new URLSearchParams({ species: species, subspecies: subspecies });
     
-    fetch(`/api/lookup-species/?species=${encodeURIComponent(species)}`)
+    fetch(`/api/lookup-species/?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
             if (data.taxid || data.genome_size) {
@@ -123,6 +137,8 @@ function lookupSpecies() {
                 
                 if (data.taxid) {
                     taxonInput.value = data.taxid;
+                    document.getElementById('lookup-taxon-id-link').href = 
+                        `https://www.ncbi.nlm.nih.gov/datasets/taxonomy/browser/?taxon=${data.taxid}`;
                 }
                 
                 if (data.genome_size) {

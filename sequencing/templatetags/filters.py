@@ -28,3 +28,10 @@ def format_genome_size(value):
     
     # Keep as bp
     return f"{value:,} bp"
+
+@register.simple_tag
+def ncbi_taxon_link(taxon_id):
+    """Generate NCBI taxonomy browser link"""
+    if not taxon_id:
+        return ""
+    return f"https://www.ncbi.nlm.nih.gov/datasets/taxonomy/browser/?taxon={taxon_id}"
