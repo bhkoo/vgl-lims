@@ -20,6 +20,9 @@ class IndividualAdmin(admin.ModelAdmin):
         ('Individual Information', {
             'fields': ('tolid', 'vglid', 'species')
         }),
+        ('Photo', {
+            'fields': ('photo_url', 'photo_attribution', 'photo_source_url')
+        }),
         ('Notes', {
             'fields': ('notes',),
             'classes': ('collapse',)

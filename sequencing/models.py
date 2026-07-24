@@ -35,6 +35,11 @@ class Individual(models.Model):
     primary_contact = models.CharField(max_length=50, blank=True)
     primary_email = models.EmailField(max_length=50, blank=True)
 
+    # Photo fields
+    photo_url = models.URLField("Photo URL", max_length=500, blank=True, help_text="Direct link to image (iNaturalist, Wikimedia Commons, etc.)")
+    photo_attribution = models.CharField("Photo Attribution", max_length=500, blank=True, help_text="e.g. 'Photo by John Doe, CC BY 4.0'")
+    photo_source_url = models.URLField("Photo Source Page", max_length=500, blank=True, help_text="Link to the original page (iNaturalist observation, Wikimedia file page, etc.)")
+
     created_at = models.DateTimeField(default=timezone.now)
     notes = models.TextField(blank=True)
     

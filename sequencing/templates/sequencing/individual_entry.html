@@ -88,6 +88,40 @@
     <!-- Line break / section separator -->
     <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
 
+    <label>{{ form.photo_url.label }}</label>
+    {{ form.photo_url }}
+    <small style="color: #666; display: block; margin-top: 5px;">
+        Direct image link (e.g. right-click an iNaturalist or Wikimedia Commons photo → "Copy Image Address")
+    </small>
+    {% if form.photo_url.errors %}
+        <span style="color: red;">{{ form.photo_url.errors }}</span>
+    {% endif %}
+
+    <label>{{ form.photo_attribution.label }}</label>
+    {{ form.photo_attribution }}
+    <small style="color: #666; display: block; margin-top: 5px;">
+        e.g. "Photo by Jane Smith, CC BY-NC 4.0"
+    </small>
+    {% if form.photo_attribution.errors %}
+        <span style="color: red;">{{ form.photo_attribution.errors }}</span>
+    {% endif %}
+
+    <label>{{ form.photo_source_url.label }}</label>
+    {{ form.photo_source_url }}
+    <small style="color: #666; display: block; margin-top: 5px;">
+        Link to the original iNaturalist observation or Wikimedia file page
+    </small>
+    {% if form.photo_source_url.errors %}
+        <span style="color: red;">{{ form.photo_source_url.errors }}</span>
+    {% endif %}
+
+    <div id="photo-preview" style="display: none; margin-top: 15px;">
+        <img id="photo-preview-img" src="" alt="Preview" style="max-width: 300px; max-height: 300px; border-radius: 4px; border: 1px solid #ddd;">
+    </div>
+
+    <!-- Line break / section separator -->
+    <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
     <label>{{ form.notes.label }}</label>
     {{ form.notes }}
     {% if form.notes.errors %}
@@ -157,6 +191,23 @@ function lookupSpecies() {
             button.textContent = originalText;
             button.disabled = false;
         });
+}
+document.querySelector('input[name="photo_url"]').addEventListener('input', updatePreview);
+document.querySelector('input[name="photo_attribution"]').addEventListener('input', updatePreview);
+
+function updatePreview() {
+    const preview = document.getElementById('photo-preview');
+    const previewImg = document.getElementById('photo-preview-img');
+    const url = document.querySelector('input[name="photo_url"]').value.trim();
+    const attribution = document.querySelector('input[name="photo_attribution"]').value.trim();
+
+    if (url) {
+        previewImg.src = url;
+        previewImg.title = attribution;  // Tooltip on hover
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
 }
 </script>
 {% endblock %}

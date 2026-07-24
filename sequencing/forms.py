@@ -5,6 +5,7 @@ class IndividualForm(forms.ModelForm):
     class Meta:
         model = Individual
         fields = ['species', 'subspecies', 'tolid', 'vglid', 'taxid', 'expected_genome_size_bp', 'primary_contact', 
+                  'photo_url', 'photo_attribution', 'photo_source_url', 
                   'primary_email', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),

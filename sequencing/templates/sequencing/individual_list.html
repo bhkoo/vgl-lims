@@ -6,6 +6,7 @@
 <table>
     <thead>
         <tr>
+            <th>Photo</th>
             <th>Species</th>
             <th>Subspecies</th>
             <th>ToLID</th>
@@ -19,6 +20,17 @@
     <tbody>
         {% for individual in individuals %}
         <tr>
+            <td>
+                {% if individual.photo_url %}
+                    <a href="{{ individual.photo_source_url|default:individual.photo_url }}" target="_blank">
+                        <img src="{{ individual.photo_url }}" alt="{{ individual.species }}" 
+                            title="{{ individual.photo_attribution }}"
+                            style="width: 90px; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                    </a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
             <td>{{ individual.species }}</td>
             <td>{{ individual.subspecies|default:"—" }}</td>
             <td>{{ individual.tolid }}</td>
