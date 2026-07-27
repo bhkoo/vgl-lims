@@ -88,7 +88,7 @@
     <!-- Line break / section separator -->
     <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
 
-    <label>{{ form.photo_url.label }}</label>
+    <label>{{ form.photo_url.label }} (Optional)</label>
     {{ form.photo_url }}
     <small style="color: #666; display: block; margin-top: 5px;">
         Direct image link (e.g. right-click an iNaturalist or Wikimedia Commons photo → "Copy Image Address")
@@ -97,7 +97,7 @@
         <span style="color: red;">{{ form.photo_url.errors }}</span>
     {% endif %}
 
-    <label>{{ form.photo_attribution.label }}</label>
+    <label>{{ form.photo_attribution.label }} (Optional)</label>
     {{ form.photo_attribution }}
     <small style="color: #666; display: block; margin-top: 5px;">
         e.g. "Photo by Jane Smith, CC BY-NC 4.0"
@@ -106,7 +106,7 @@
         <span style="color: red;">{{ form.photo_attribution.errors }}</span>
     {% endif %}
 
-    <label>{{ form.photo_source_url.label }}</label>
+    <label>{{ form.photo_source_url.label }} (Optional)</label>
     {{ form.photo_source_url }}
     <small style="color: #666; display: block; margin-top: 5px;">
         Link to the original iNaturalist observation or Wikimedia file page
