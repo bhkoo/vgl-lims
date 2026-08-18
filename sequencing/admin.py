@@ -58,20 +58,21 @@ class PacBioRunAdmin(admin.ModelAdmin):
 
 @admin.register(HiCRun)
 class HiCRunAdmin(admin.ModelAdmin):
-    list_display = ['run_id', 'individual', 'library_prep', 'status', 'total_bases', 'coverage', 'sequenced_by', 'created_at']
-    search_fields = ['run_id', 'individual__tolid', 'genomeark_uploads_path']
+    list_display = ['individual', 'run_number', 'data_location', 'filepath', 'library_prep', 'status', 'total_bases', 'coverage', 'sequenced_by', 'created_at']
+    search_fields = ['individual__tolid', 'run_number', 'filepath']
     list_filter = ['library_prep', 'status', 'sequenced_by']
     date_hierarchy = 'created_at'
+    readonly_fields = ['run_number']
     
     fieldsets = (
         ('Individual', {
             'fields': ('individual',)
         }),
         ('Run Information', {
-            'fields': ('run_id', 'metadata_id', 'genomeark_uploads_path')
+            'fields': ('run_number', 'filepath')
         }),
         ('Sequencing Details', {
-            'fields': ('instrument', 'library_prep', 'multiplexed', 'status', 'sequenced_by')
+            'fields': ('instrument', 'library_prep', 'status', 'sequenced_by')
         }),
         ('Data Metrics', {
             'fields': ('total_bases', 'coverage'),

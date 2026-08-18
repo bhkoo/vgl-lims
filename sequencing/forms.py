@@ -6,21 +6,6 @@ RUN_ID_PATTERN = re.compile(r'^r\d{5}_\d{8}_\d{6}$')
 METADATA_ID_PATTERN = re.compile(r'^m\d{5}_\d{8}_\d{6}_s\d$')
 BARCODE_PATTERN = re.compile(r'^bc\d{4}$')
 
-# PacBio Sequencing Personnel
-PACBIO_SEQUENCED_BY_CHOICES = [
-    ('', '-- Select --'),
-    ('jbalacco', 'Jennifer Balacco'),
-    ('njain', 'Nivesh Jain'),
-    ('external', 'External'),
-]
-
-# Hi-C Sequencing Personnel
-HIC_SEQUENCED_BY_CHOICES = [
-    ('', '-- Select --'),
-    ('fackerman', 'Francine Ackerman'),
-    ('botoole', 'Brian O\'Toole'),
-]
-
 
 class IndividualForm(forms.ModelForm):
     class Meta:
@@ -39,8 +24,6 @@ class IndividualForm(forms.ModelForm):
         return species
 
 class PacBioRunForm(forms.ModelForm):
-    sequenced_by = forms.ChoiceField(choices=PACBIO_SEQUENCED_BY_CHOICES, required=True)
-
     class Meta:
         model = PacBioRun
         fields = ['tissue_id', 'run_id', 'metadata_id', 'barcode', 'multiplexed', 'hpc_filepath', 'instrument', 
@@ -117,7 +100,7 @@ PacBioRunFormSet = forms.inlineformset_factory(
 class HiCRunForm(forms.ModelForm):
     class Meta:
         model = HiCRun
-        fields = ['tissue_id', 'run_id', 'metadata_id', 'barcode', 'genomeark_upload_filepath', 'instrument', 
+        fields = ['tissue_id', 'data_location', 'filepath', 'instrument', 
                   'library_prep', 'sequenced_by', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 2}),

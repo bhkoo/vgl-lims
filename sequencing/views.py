@@ -127,8 +127,28 @@ def sequencing_entry(request):
         elif sequencing_type == 'hic':
             hic_formset = HiCRunFormSet(request.POST, instance=individual)
             
-            if not hic_formset.is_valid():
-                for form_idx, form in enumerate(hic_formset):
+            if hic_formset.is_valid():
+                # Get current highest run_number for this individual
+                existing_count = individual.hic_runs.count()
+                
+                instances = hic_formset.save(commit=False)
+                next_number = existing_count + 1
+                
+                for instance in instances:
+                    instance.individual = individual
+                    instance.run_number = next_number
+                    instance.save()
+                    next_number += 1
+                
+                # Handle any deleted forms
+                for obj in hic_formset.deleted_objects:
+                    obj.delete()
+                
+                count = len(instances)
+                messages.success(request, f'Successfully added {count} Hi-C run(s) for {individual.tolid}')
+                return redirect('sequencing_entry')
+            else:
+                for form in hic_formset:
                     if form.errors:
                         for field, errors in form.errors.items():
                             for error in errors:
@@ -136,16 +156,7 @@ def sequencing_entry(request):
                                     messages.error(request, f'Error: {error}')
                                 else:
                                     messages.error(request, f'Error ({field}): {error}')
-                
-                for error in hic_formset.non_form_errors():
-                    messages.error(request, f'Error: {error}')
-                
                 pacbio_formset = PacBioRunFormSet()
-            else:
-                runs = hic_formset.save()
-                count = len([r for r in runs if r is not None])
-                messages.success(request, f'Successfully added {count} Hi-C run(s) for {individual.tolid}')
-                return redirect('sequencing_entry')
         else:
             messages.error(request, 'Invalid sequencing type')
             return redirect('sequencing_entry')

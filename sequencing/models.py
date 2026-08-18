@@ -101,7 +101,14 @@ class PacBioRun(models.Model):
         ('complete', 'Complete'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
-    sequenced_by = models.CharField(max_length=255, blank=True)
+    # PacBio Sequencing Personnel
+    PACBIO_SEQUENCED_BY_CHOICES = [
+        ('', '-- Select --'),
+        ('jbalacco', 'Jennifer Balacco'),
+        ('njain', 'Nivesh Jain'),
+        ('external', 'External'),
+    ]
+    sequenced_by = models.CharField(max_length=255, choices=PACBIO_SEQUENCED_BY_CHOICES, blank=True)
     
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -124,10 +131,22 @@ class HiCRun(models.Model):
     
     individual = models.ForeignKey(Individual, on_delete=models.CASCADE, related_name='hic_runs')
     tissue_id = models.CharField("Tissue ID", max_length=20, blank = True)
-    run_id = models.CharField("Run ID", max_length=100, unique=True)
-    metadata_id = models.CharField("Metadata ID", max_length=100, blank=True)
-    barcode = models.CharField(max_length=50, blank=True)
-    genomeark_upload_filepath = models.CharField("GenomeArk Upload Filepath", max_length=100, blank=True)
+    run_number = models.PositiveIntegerField(
+        "Run Number",
+        help_text="Auto-assigned based on how many Hi-C runs exist for this individual",
+        editable=False,
+        null=True,
+        blank=True,
+    )
+
+    # Data storage location for Hi-C reads
+    DATA_LOCATION_CHOICES = [
+        ('', '-- Select --'),
+        ('genomeark_upload', 'GenomeArk Upload S3 Bucket'),
+        ('hpc', 'HPC')
+    ]
+    data_location = models.CharField("Data Location", max_length = 25, choices=DATA_LOCATION_CHOICES, blank=True)
+    filepath = models.CharField("Filepath (GenomeArk Upload or HPC)", max_length=100, blank=True)
     
     INSTRUMENT_CHOICES = [
         ('illumina_novaseq_6000', 'Illumina NovaSeq 6000'),
@@ -150,17 +169,25 @@ class HiCRun(models.Model):
         ('complete', 'Complete'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
-    sequenced_by = models.CharField(max_length=255, blank=True)
+    # Hi-C Sequencing Personnel
+    HIC_SEQUENCED_BY_CHOICES = [
+        ('', '-- Select --'),
+        ('fackerman', 'Francine Ackerman'),
+        ('botoole', 'Brian O\'Toole'),
+        ('external', 'External'),
+    ]
+    sequenced_by = models.CharField(max_length=255, choices=HIC_SEQUENCED_BY_CHOICES, blank=True)
     
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     notes = models.TextField(blank=True)
     
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['individual', 'run_number']
+        unique_together = ['individual', 'run_number']
     
     def __str__(self):
-        return f"{self.run_id} - {self.individual.tol_id}"
+        return f"{self.individual.tolid} - Run {self.run_number}"
     
     def save(self, *args, **kwargs):
         """Calculate coverage on save if total_bases is provided"""

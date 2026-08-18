@@ -51,23 +51,23 @@
         <table>
             <thead>
                 <tr>
-                    <th>Run ID</th>
+                    <th>Run Number</th>
                     <th>Library Prep</th>
                     <th>Status</th>
                     <th>Total Bases</th>
                     <th>Coverage</th>
-                    <th>Received By</th>
+                    <th>Sequenced By</th>
                 </tr>
             </thead>
             <tbody>
                 {% for run in individual.hic_runs.all %}
                 <tr>
-                    <td>{{ run.run_id }}</td>
+                    <td>{{ run.run_number }}</td>
                     <td>{{ run.get_library_prep_display }}</td>
                     <td>{{ run.get_status_display }}</td>
                     <td>{{ run.total_bases|format_genome_size }}</td>
                     <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
-                    <td>{{ run.received_by|default:"—" }}</td>
+                    <td>{{ run.sequenced_by|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
