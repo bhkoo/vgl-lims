@@ -38,7 +38,7 @@
                     <td>{{ run.get_status_display }}</td>
                     <td>{{ run.total_bases|format_genome_size }}</td>
                     <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
-                    <td>{{ run.sequenced_by|default:"—" }}</td>
+                    <td>{{ run.get_sequenced_by_display|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -67,7 +67,7 @@
                     <td>{{ run.get_status_display }}</td>
                     <td>{{ run.total_bases|format_genome_size }}</td>
                     <td>{{ run.coverage|default:"—" }}{% if run.coverage %}x{% endif %}</td>
-                    <td>{{ run.sequenced_by|default:"—" }}</td>
+                    <td>{{ run.get_sequenced_by_display|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

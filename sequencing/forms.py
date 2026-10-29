@@ -3,7 +3,7 @@ from django import forms
 from .models import Individual, PacBioRun, HiCRun
 
 RUN_ID_PATTERN = re.compile(r'^r\d{5}_\d{8}_\d{6}$')
-METADATA_ID_PATTERN = re.compile(r'^m\d{5}_\d{8}_\d{6}_s\d$')
+METADATA_ID_PATTERN = re.compile(r'^m\d{5}_\d{6}_\d{6}_s\d$')
 BARCODE_PATTERN = re.compile(r'^bc\d{4}$')
 
 
@@ -11,7 +11,7 @@ class IndividualForm(forms.ModelForm):
     class Meta:
         model = Individual
         fields = ['species', 'subspecies', 'tolid', 'vglid', 'taxid', 'expected_genome_size_bp', 'primary_contact', 
-                  'photo_url', 'photo_attribution', 'photo_source_url', 
+                  'photo_file', 'photo_url', 'photo_attribution', 'photo_source_url', 
                   'primary_email', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
@@ -22,6 +22,18 @@ class IndividualForm(forms.ModelForm):
         if species:
             species = species.replace('_', ' ')
         return species
+
+    def clean(self):
+        cleaned_data = super().clean()
+        photo_url = cleaned_data.get('photo_url')
+        photo_file = cleaned_data.get('photo_file')
+
+        if photo_url and photo_file:
+            raise forms.ValidationError(
+                'Please provide either a photo URL or an uploaded photo, not both.'
+            )
+
+        return cleaned_data
 
 class PacBioRunForm(forms.ModelForm):
     class Meta:
@@ -36,7 +48,7 @@ class PacBioRunForm(forms.ModelForm):
         run_id = self.cleaned_data.get('run_id', '').strip()
         if run_id and not RUN_ID_PATTERN.match(run_id):
             raise forms.ValidationError(
-                'Run ID must match format r[5 digits]_[YYYYMMDD]_[HHMMSS], e.g. r84091_20260625_203158'
+                'Run ID must match format r[5 digits]_[YYMMDD]_[HHMMSS], e.g. r84091_20260625_203158'
             )
         return run_id
 

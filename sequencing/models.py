@@ -39,6 +39,7 @@ class Individual(models.Model):
     photo_url = models.URLField("Photo URL", max_length=500, blank=True, help_text="Direct link to image (iNaturalist, Wikimedia Commons, etc.)")
     photo_attribution = models.CharField("Photo Attribution", max_length=500, blank=True, help_text="e.g. 'Photo by John Doe, CC BY 4.0'")
     photo_source_url = models.URLField("Photo Source Page", max_length=500, blank=True, help_text="Link to the original page (iNaturalist observation, Wikimedia file page, etc.)")
+    photo_file = models.ImageField("Photo Upload", upload_to='individual_photos/', blank=True)
 
     created_at = models.DateTimeField(default=timezone.now)
     notes = models.TextField(blank=True)
@@ -48,6 +49,13 @@ class Individual(models.Model):
     
     def __str__(self):
         return f"{self.species}, {self.tolid}"
+
+    @property
+    def photo_src(self):
+        """Uploaded file takes priority over the URL"""
+        if self.photo_file:
+            return self.photo_file.url
+        return self.photo_url or None
     
     @property
     def total_pacbio_coverage(self):

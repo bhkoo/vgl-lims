@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Add New Individual</h1>
 
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     
     <label>{{ form.species.label }}</label>
@@ -88,35 +88,62 @@
     <!-- Line break / section separator -->
     <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
 
-    <label>{{ form.photo_url.label }} (Optional)</label>
-    {{ form.photo_url }}
-    <small style="color: #666; display: block; margin-top: 5px;">
-        Direct image link (e.g. right-click an iNaturalist or Wikimedia Commons photo → "Copy Image Address")
-    </small>
-    {% if form.photo_url.errors %}
-        <span style="color: red;">{{ form.photo_url.errors }}</span>
-    {% endif %}
+    <h3>Photo (Optional)</h3>
 
-    <label>{{ form.photo_attribution.label }} (Optional)</label>
-    {{ form.photo_attribution }}
-    <small style="color: #666; display: block; margin-top: 5px;">
-        e.g. "Photo by Jane Smith, CC BY-NC 4.0"
-    </small>
-    {% if form.photo_attribution.errors %}
-        <span style="color: red;">{{ form.photo_attribution.errors }}</span>
-    {% endif %}
+    <div style="margin-bottom: 10px;">
+        <label style="display: inline; margin-right: 20px; font-weight: normal;">
+            <input type="radio" name="photo_method" value="none" checked onchange="togglePhotoMethod()"> No photo
+        </label>
+        <label style="display: inline; margin-right: 20px; font-weight: normal;">
+            <input type="radio" name="photo_method" value="url" onchange="togglePhotoMethod()"> Link from URL
+        </label>
+        <label style="display: inline; font-weight: normal;">
+            <input type="radio" name="photo_method" value="upload" onchange="togglePhotoMethod()"> Upload from computer
+        </label>
+    </div>
 
-    <label>{{ form.photo_source_url.label }} (Optional)</label>
-    {{ form.photo_source_url }}
-    <small style="color: #666; display: block; margin-top: 5px;">
-        Link to the original iNaturalist observation or Wikimedia file page
-    </small>
-    {% if form.photo_source_url.errors %}
-        <span style="color: red;">{{ form.photo_source_url.errors }}</span>
-    {% endif %}
+    <div id="photo-url-section" style="display: none;">
+        <label>{{ form.photo_url.label }}</label>
+        {{ form.photo_url }}
+        <small style="color: #666; display: block; margin-top: 5px;">
+            Direct image link (e.g. right-click an iNaturalist or Wikimedia Commons photo → "Copy Image Address")
+        </small>
+        {% if form.photo_url.errors %}
+            <span style="color: red;">{{ form.photo_url.errors }}</span>
+        {% endif %}
+
+        <label>{{ form.photo_source_url.label }}</label>
+        {{ form.photo_source_url }}
+        <small style="color: #666; display: block; margin-top: 5px;">
+            Link to the original iNaturalist observation or Wikimedia file page
+        </small>
+        {% if form.photo_source_url.errors %}
+            <span style="color: red;">{{ form.photo_source_url.errors }}</span>
+        {% endif %}
+    </div>
+
+    <div id="photo-upload-section" style="display: none;">
+        <label>{{ form.photo_file.label }}</label>
+        {{ form.photo_file }}
+        {% if form.photo_file.errors %}
+            <span style="color: red;">{{ form.photo_file.errors }}</span>
+        {% endif %}
+    </div>
+
+    <div id="photo-attribution-section" style="display: none;">
+        <label>{{ form.photo_attribution.label }}</label>
+        {{ form.photo_attribution }}
+        <small style="color: #666; display: block; margin-top: 5px;">
+            e.g. "Photo by Jane Smith, CC BY-NC 4.0"
+        </small>
+        {% if form.photo_attribution.errors %}
+            <span style="color: red;">{{ form.photo_attribution.errors }}</span>
+        {% endif %}
+    </div>
 
     <div id="photo-preview" style="display: none; margin-top: 15px;">
-        <img id="photo-preview-img" src="" alt="Preview" style="max-width: 300px; max-height: 300px; border-radius: 4px; border: 1px solid #ddd;">
+        <img id="photo-preview-img" src="" alt="Preview"
+            style="max-width: 300px; max-height: 300px; border-radius: 4px; border: 1px solid #ddd;">
     </div>
 
     <!-- Line break / section separator -->
@@ -192,22 +219,56 @@ function lookupSpecies() {
             button.disabled = false;
         });
 }
-document.querySelector('input[name="photo_url"]').addEventListener('input', updatePreview);
-document.querySelector('input[name="photo_attribution"]').addEventListener('input', updatePreview);
+const photoUrlInput = document.querySelector('input[name="photo_url"]');
+const photoFileInput = document.querySelector('input[name="photo_file"]');
+const photoAttributionInput = document.querySelector('input[name="photo_attribution"]');
+const photoSourceInput = document.querySelector('input[name="photo_source_url"]');
 
-function updatePreview() {
+function togglePhotoMethod() {
+    const method = document.querySelector('input[name="photo_method"]:checked').value;
+
+    document.getElementById('photo-url-section').style.display = method === 'url' ? 'block' : 'none';
+    document.getElementById('photo-upload-section').style.display = method === 'upload' ? 'block' : 'none';
+    document.getElementById('photo-attribution-section').style.display = method === 'none' ? 'none' : 'block';
+
+    // Clear whichever inputs are no longer in use
+    if (method !== 'url') {
+        photoUrlInput.value = '';
+        photoSourceInput.value = '';
+    }
+    if (method !== 'upload') {
+        photoFileInput.value = '';
+    }
+    if (method === 'none') {
+        photoAttributionInput.value = '';
+    }
+
+    updatePhotoPreview();
+}
+
+function updatePhotoPreview() {
     const preview = document.getElementById('photo-preview');
     const previewImg = document.getElementById('photo-preview-img');
-    const url = document.querySelector('input[name="photo_url"]').value.trim();
-    const attribution = document.querySelector('input[name="photo_attribution"]').value.trim();
+    const method = document.querySelector('input[name="photo_method"]:checked').value;
 
-    if (url) {
-        previewImg.src = url;
-        previewImg.title = attribution;  // Tooltip on hover
+    let src = '';
+    if (method === 'url') {
+        src = photoUrlInput.value.trim();
+    } else if (method === 'upload' && photoFileInput.files[0]) {
+        src = URL.createObjectURL(photoFileInput.files[0]);
+    }
+
+    if (src) {
+        previewImg.src = src;
+        previewImg.title = photoAttributionInput.value.trim();
         preview.style.display = 'block';
     } else {
         preview.style.display = 'none';
     }
 }
+
+photoUrlInput.addEventListener('input', updatePhotoPreview);
+photoFileInput.addEventListener('change', updatePhotoPreview);
+photoAttributionInput.addEventListener('input', updatePhotoPreview);
 </script>
 {% endblock %}

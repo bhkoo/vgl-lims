@@ -21,11 +21,15 @@
         {% for individual in individuals %}
         <tr>
             <td>
-                {% if individual.photo_url %}
+                {% if individual.photo_file %}
+                    <img src="{{ individual.photo_file.url }}" alt="{{ individual.species }}"
+                        title="{{ individual.photo_attribution }}"
+                        style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+                {% elif individual.photo_url %}
                     <a href="{{ individual.photo_source_url|default:individual.photo_url }}" target="_blank">
-                        <img src="{{ individual.photo_url }}" alt="{{ individual.species }}" 
+                        <img src="{{ individual.photo_url }}" alt="{{ individual.species }}"
                             title="{{ individual.photo_attribution }}"
-                            style="width: 90px; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;">
                     </a>
                 {% else %}
                     —

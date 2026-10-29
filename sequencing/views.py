@@ -19,7 +19,7 @@ def individual_entry(request):
     """Form to add a new individual"""
     
     if request.method == 'POST':
-        form = IndividualForm(request.POST)
+        form = IndividualForm(request.POST, request.FILES)
         
         if form.is_valid():
             individual = form.save(commit = False)
